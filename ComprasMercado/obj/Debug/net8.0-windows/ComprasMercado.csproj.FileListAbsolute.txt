@@ -31,3 +31,4 @@ C:\Projetos\ComprasMercado\ComprasMercado\obj\Debug\net8.0-windows\ComprasMercad
 C:\Projetos\ComprasMercado\ComprasMercado\obj\Debug\net8.0-windows\ComprasMercado.genruntimeconfig.cache
 C:\Projetos\ComprasMercado\ComprasMercado\obj\Debug\net8.0-windows\ref\ComprasMercado.dll
 C:\Projetos\ComprasMercado\ComprasMercado\obj\Debug\net8.0-windows\ComprasMercado.FormMenuPrincipal.resources
+C:\Projetos\ComprasMercado\ComprasMercado\obj\Debug\net8.0-windows\ComprasMercado.sourcelink.json

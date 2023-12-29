@@ -11,6 +11,19 @@ namespace ComprasMercado
         private string _senhaUsuario = "";
         private string _servidor = "localhost";
         private string _conexao = "";
+        private MySqlConnection? _cn;
+        private MySqlCommand? _comando;
+
+        public MySqlCommand Comando
+        {
+            get { return _comando; }
+            set { _comando = value; }
+        }
+
+        public MySqlConnection Cn
+        {
+            get { return _cn; }
+        }
 
         public string NomeBanco
         {
@@ -42,7 +55,7 @@ namespace ComprasMercado
 
         Uteis uteis = new Uteis();
 
-        public void ConectaDB()
+        public void ConectaDB(bool executaCriaTabelas)
         {
             try
             {
@@ -53,10 +66,12 @@ namespace ComprasMercado
                         + ";pwd=" + _senhaUsuario
                         + ";database=" + _nomeBanco);
                 }
-                var cn = new MySqlConnection(_conexao);
-
-                cn.Open();
-                CriaTabelas();
+                _cn = new MySqlConnection(_conexao);
+                _cn.Open();
+                if (executaCriaTabelas == true)
+                {
+                    CriaTabelas();
+                }
             }
             catch (Exception ex)
             {
@@ -69,12 +84,12 @@ namespace ComprasMercado
         {
             try
             {
-                var cn = new MySqlConnection(_conexao);
-                cn.Open();
+                _cn = new MySqlConnection(_conexao);
+                _cn.Open();
                 uteis.csql = "SELECT * FROM local limit 1";
-                var comando = new MySqlCommand(uteis.csql, cn);
-                comando.Prepare();
-                var reader = comando.ExecuteReader();
+                _comando = new MySqlCommand(uteis.csql, _cn);
+                _comando.Prepare();
+                var reader = _comando.ExecuteReader();
 
                 //Verifica se existe algum registro na tabela 'local'.
                 if (reader.Read() == true)
@@ -92,18 +107,18 @@ namespace ComprasMercado
                         "nomelocal VARCHAR(100) NULL," +
                         "PRIMARY KEY (idlocal))" +
                         " ENGINE = InnoDB";
-                    comando = new MySqlCommand(uteis.csql, cn);
-                    comando.Prepare();
-                    comando.ExecuteNonQuery();
+                    _comando = new MySqlCommand(uteis.csql, _cn);
+                    _comando.Prepare();
+                    _comando.ExecuteNonQuery();
                     //Cria tabela 'unidademedida'.
                     uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.unidademedida (" +
                     "idunidademedida INT NOT NULL," +
                     "nomeunidademedida VARCHAR(100) NULL," +
                     "PRIMARY KEY (idunidademedida))" +
                     " ENGINE = InnoDB";
-                    comando = new MySqlCommand(uteis.csql, cn);
-                    comando.Prepare();
-                    comando.ExecuteNonQuery();
+                    _comando = new MySqlCommand(uteis.csql, _cn);
+                    _comando.Prepare();
+                    _comando.ExecuteNonQuery();
                     //Cria tabela 'produto.
                     uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.produto (" +
                         "idproduto INT NOT NULL," +
@@ -117,9 +132,9 @@ namespace ComprasMercado
                         " ON DELETE NO ACTION" +
                         " ON UPDATE NO ACTION)" +
                         " ENGINE = InnoDB";
-                    comando = new MySqlCommand(uteis.csql, cn);
-                    comando.Prepare();
-                    comando.ExecuteNonQuery();
+                    _comando = new MySqlCommand(uteis.csql, _cn);
+                    _comando.Prepare();
+                    _comando.ExecuteNonQuery();
                     //Cria tabela 'compraproduto'.
                     uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.compraproduto (" +
                         "idcompraproduto INT NOT NULL," +
@@ -143,11 +158,11 @@ namespace ComprasMercado
                         " ON DELETE NO ACTION" +
                         " ON UPDATE NO ACTION)" +
                         " ENGINE = InnoDB";
-                    comando = new MySqlCommand(uteis.csql, cn);
-                    comando.Prepare();
-                    comando.ExecuteNonQuery();
+                    _comando = new MySqlCommand(uteis.csql, _cn);
+                    _comando.Prepare();
+                    _comando.ExecuteNonQuery();
                 }
-                cn.Close();
+                _cn.Close();
             }
             catch (Exception ex)
             {
@@ -161,26 +176,26 @@ namespace ComprasMercado
                 };
             //Cria as tabelas do banco de dados.
             CriaTabelas:
-                var cn = new MySqlConnection(_conexao);
-                cn.Open();
+                _cn = new MySqlConnection(_conexao);
+                _cn.Open();
                 //Cria tabela 'local'.
                 uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.local (" +
                     "idlocal INT NOT NULL," +
                     "nomelocal VARCHAR(100) NULL," +
                     "PRIMARY KEY (idlocal))" +
                     " ENGINE = InnoDB";
-                var comando = new MySqlCommand(uteis.csql, cn);
-                comando.Prepare();
-                comando.ExecuteNonQuery();
+                _comando = new MySqlCommand(uteis.csql, _cn);
+                _comando.Prepare();
+                _comando.ExecuteNonQuery();
                 //Cria tabela 'unidademedida'.
                 uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.unidademedida (" +
                 "idunidademedida INT NOT NULL," +
                 "nomeunidademedida VARCHAR(100) NULL," +
                 "PRIMARY KEY (idunidademedida))" +
                 " ENGINE = InnoDB";
-                comando = new MySqlCommand(uteis.csql, cn);
-                comando.Prepare();
-                comando.ExecuteNonQuery();
+                _comando = new MySqlCommand(uteis.csql, _cn);
+                _comando.Prepare();
+                _comando.ExecuteNonQuery();
                 //Cria tabela 'produto.
                 uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.produto (" +
                     "idproduto INT NOT NULL," +
@@ -194,9 +209,9 @@ namespace ComprasMercado
                     " ON DELETE NO ACTION" +
                     " ON UPDATE NO ACTION)" +
                     " ENGINE = InnoDB";
-                comando = new MySqlCommand(uteis.csql, cn);
-                comando.Prepare();
-                comando.ExecuteNonQuery();
+                _comando = new MySqlCommand(uteis.csql, _cn);
+                _comando.Prepare();
+                _comando.ExecuteNonQuery();
                 //Cria tabela 'compraproduto'.
                 uteis.csql = "CREATE TABLE IF NOT EXISTS comprasmercado.compraproduto (" +
                     "idcompraproduto INT NOT NULL," +
@@ -220,11 +235,12 @@ namespace ComprasMercado
                     " ON DELETE NO ACTION" +
                     " ON UPDATE NO ACTION)" +
                     " ENGINE = InnoDB";
-                comando = new MySqlCommand(uteis.csql, cn);
-                comando.Prepare();
-                comando.ExecuteNonQuery();
-                cn.Close();
+                _comando = new MySqlCommand(uteis.csql, _cn);
+                _comando.Prepare();
+                _comando.ExecuteNonQuery();
+                _cn.Close();
             }
         }
     }
+
 }

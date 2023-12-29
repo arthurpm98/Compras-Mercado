@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ComprasMercado")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4605e36cf0e6f8211c5d76fa77e1b1aeb41e5ac3")]
 [assembly: System.Reflection.AssemblyProductAttribute("ComprasMercado")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ComprasMercado")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

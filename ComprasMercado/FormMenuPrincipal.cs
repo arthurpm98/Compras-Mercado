@@ -1,21 +1,35 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ZstdSharp.Unsafe;
 
 namespace ComprasMercado
 {
     public partial class FormMenuPrincipal : Form
     {
+
+        BancoDeDados banco = new BancoDeDados();
+        Uteis uteis = new Uteis();
+
         public FormMenuPrincipal()
         {
             InitializeComponent();
+        }
+
+        public FormMenuPrincipal(string servidor, string usuario, string senha) : this()
+        {
+            banco.Servidor = servidor;
+            banco.UsuarioBanco = usuario;
+            banco.SenhaUsuario = senha;
         }
 
         private void FormMenuPrincipal_Load(object sender, EventArgs e)
@@ -41,6 +55,12 @@ namespace ComprasMercado
         private void MenuItemCompras_Click(object sender, EventArgs e)
         {
             PreparaCamposPainel("compras");
+        }
+
+        private void buttonAdicionar_Click(object sender, EventArgs e)
+        {
+            PreparaCamposParaAcaoAdicionar(lblTitulo.Text);
+            CarregaProximoID("adicionar", lblTitulo.Text);
         }
 
         private void PreparaCamposPainel(string itemMenu)
@@ -122,6 +142,59 @@ namespace ComprasMercado
                     {
                         lblTitulo.Text = "Cadastro de Compras";
                     }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro: " + ex.Message);
+            }
+        }
+
+        private void PreparaCamposParaAcaoAdicionar(string tituloPainel)
+        {
+            try
+            {
+                //Habilita e Limpa os campos que serão utilizados.
+                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas")
+                {
+                    txtDescricao.Enabled = true;
+                    txtDescricao.Text = "";
+                    buttonSalvar.Enabled = true;
+                    buttonCancelar.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro: " + ex.Message);
+            }
+        }
+
+        private void CarregaProximoID(string botao, string tituloPainel)
+        {
+            try
+            {
+                //Verifica o botão que está sendo acionado no painel
+                if (botao == "adicionar")
+                {
+
+                    banco.ConectaDB(false);
+                    if (tituloPainel == "Cadastro de Locais")
+                    {
+                        uteis.csql = "SELECT idlocal FROM local ORDER BY idlocal ASC LIMIT 1";
+                    }
+                    else if (tituloPainel == "Cadastro de Unidades de Medidas")
+                    {
+                        uteis.csql = "SELECT idunidademedida FROM unidademedida ORDER BY idunidademedida ASC LIMIT 1";
+                    }
+                    banco.Comando = new MySqlCommand(uteis.csql, banco.Cn);
+                    banco.Comando.Prepare();
+                    banco.Comando.ExecuteNonQuery();
+                    var reader = banco.Comando.ExecuteReader();
+                    if (reader.Read() == true)
+                    {
+                        txtCodigo.Text = (reader.GetInt32(0) + 1).ToString();
+                    }
+                    banco.Cn.Close();
                 }
             }
             catch (Exception ex)
