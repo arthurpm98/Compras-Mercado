@@ -71,11 +71,35 @@ namespace ComprasMercado
             {
                 if (VerificaPreenchimentoDosCampos(lblTitulo.Text) == true)
                 {
+                    int posicaoCaractere;
                     banco.ConectaDB(false);
                     uteis.csql = txtCodigo.Text + ",'" + txtDescricao.Text + "'";
                     if (lblTitulo.Text == "Cadastro de Locais")
                     {
                         banco.Comando = new MySqlCommand(uteis.MontaInsert("local", uteis.csql), banco.Cn);
+                    }
+                    if (lblTitulo.Text == "Cadastro de Unidades de Medidas")
+                    {
+                        banco.Comando = new MySqlCommand(uteis.MontaInsert("unidademedida", uteis.csql), banco.Cn);
+                    }
+                    if (lblTitulo.Text == "Cadastro de Produtos")
+                    {
+                        posicaoCaractere = cbo3.SelectedItem.ToString().IndexOf("-");
+                        uteis.csql = uteis.csql + ",'" +
+                                                cbo3.SelectedItem.ToString().Substring(0, posicaoCaractere - 1).Trim()
+                                                + "'";
+
+                        banco.Comando = new MySqlCommand(uteis.MontaInsert("produto", uteis.csql), banco.Cn);
+                    }
+                    if (lblTitulo.Text == "Cadastro de Compras")
+                    {
+                        uteis.csql = txtCodigo.Text + ",'" + CalendarDataCompra.ToString() + "'";
+                        posicaoCaractere = cbo1.SelectedItem.ToString().IndexOf("-");
+                        uteis.csql = uteis.csql + ",'" +
+                                                cbo1.SelectedItem.ToString().Substring(0, posicaoCaractere - 1).Trim()
+                                                + "'";
+
+                        //CORRIGIR ESTA PARTE
                     }
                     banco.Comando.Prepare();
                     banco.Comando.ExecuteNonQuery();
@@ -296,6 +320,7 @@ namespace ComprasMercado
                 combo.Items.Clear();
                 banco.ConectaDB(false);
 
+                //Verifica o nome do ComboBox que vai ser preenchido
                 if (combo.Name == "cbo1")
                 {
                     banco.Comando = new MySqlCommand(uteis.MontaQuery("idlocal, nomelocal", "local", "", "idlocal"), banco.Cn);
@@ -312,9 +337,14 @@ namespace ComprasMercado
                 banco.Comando.Prepare();
                 banco.Comando.ExecuteNonQuery();
                 var reader = banco.Comando.ExecuteReader();
-                while (reader.Read() == true)
+
+                while (reader.HasRows)
                 {
-                    combo.Items.Add(reader.GetInt32(0) + " - " + reader.GetString(1));
+                    while (reader.Read() == true)
+                    {
+                        //Preenche o combo, seguindo o padrão "Código - Descrição"
+                        combo.Items.Add(reader.GetInt32(0) + " - " + reader.GetString(1));
+                    }
                     reader.NextResult();
                 }
                 banco.Cn.Close();
@@ -330,6 +360,8 @@ namespace ComprasMercado
             try
             {
                 uteis.bAux = true;
+
+                //Verifica o título do painel
                 if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas" || tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
                 {
                     if (txtCodigo.Text == "" || txtDescricao.Text == "") { uteis.bAux = false; }
