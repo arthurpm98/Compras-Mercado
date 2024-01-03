@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Asn1.X509;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ZstdSharp.Unsafe;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace ComprasMercado
 {
@@ -61,6 +63,36 @@ namespace ComprasMercado
         {
             PreparaCamposParaAcaoAdicionar(lblTitulo.Text);
             CarregaProximoID("adicionar", lblTitulo.Text);
+        }
+
+        private void buttonSalvar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (VerificaPreenchimentoDosCampos(lblTitulo.Text) == true)
+                {
+                    banco.ConectaDB(false);
+                    uteis.csql = txtCodigo.Text + ",'" + txtDescricao.Text + "'";
+                    if (lblTitulo.Text == "Cadastro de Locais")
+                    {
+                        banco.Comando = new MySqlCommand(uteis.MontaInsert("local", uteis.csql), banco.Cn);
+                    }
+                    banco.Comando.Prepare();
+                    banco.Comando.ExecuteNonQuery();
+                    banco.Cn.Close();
+                    MessageBox.Show("Registro salvo com sucesso!\n" +
+                                    txtCodigo.Text + " - " + txtDescricao.Text);
+                }
+                else
+                {
+                    MessageBox.Show("Preencha todos os campos antes de salvar o registro.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro: " + ex.Message);
+            }
         }
 
         private void PreparaCamposPainel(string itemMenu)
@@ -155,12 +187,28 @@ namespace ComprasMercado
             try
             {
                 //Habilita e Limpa os campos que serão utilizados.
-                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas")
+                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas" || tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
                 {
+                    txtCodigo.Enabled = false;
                     txtDescricao.Enabled = true;
                     txtDescricao.Text = "";
                     buttonSalvar.Enabled = true;
                     buttonCancelar.Enabled = true;
+                    if (tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                    {
+                        cbo3.Enabled = true;
+                        CarregaCombo(cbo3);
+                    }
+                    if (tituloPainel == "Cadastro de Compras")
+                    {
+                        cbo1.Enabled = true;
+                        CarregaCombo(cbo1);
+                        cbo2.Enabled = true;
+                        CarregaCombo(cbo2);
+                        txtQuantidade.Enabled = true;
+                        txtValorCompra.Enabled = true;
+                        CalendarDataCompra.Enabled = true;
+                    }
                 }
             }
             catch (Exception ex)
@@ -176,16 +224,26 @@ namespace ComprasMercado
                 //Verifica o botão que está sendo acionado no painel
                 if (botao == "adicionar")
                 {
-
                     banco.ConectaDB(false);
+
+                    //Verifica o título do painel
                     if (tituloPainel == "Cadastro de Locais")
                     {
-                        uteis.csql = "SELECT idlocal FROM local ORDER BY idlocal ASC LIMIT 1";
+                        uteis.csql = uteis.MontaQuery("idlocal", "local", "", "idlocal DESC LIMIT 1");
                     }
                     else if (tituloPainel == "Cadastro de Unidades de Medidas")
                     {
-                        uteis.csql = "SELECT idunidademedida FROM unidademedida ORDER BY idunidademedida ASC LIMIT 1";
+                        uteis.csql = uteis.MontaQuery("idunidademedida", "unidademedida", "", "idunidademedida DESC LIMIT 1");
                     }
+                    else if (tituloPainel == "Cadastro de Produtos")
+                    {
+                        uteis.csql = uteis.MontaQuery("idproduto", "produto", "", "idproduto DESC LIMIT 1");
+                    }
+                    else if (tituloPainel == "Cadastro de Compras")
+                    {
+                        uteis.csql = uteis.MontaQuery("idcompraproduto", "compraproduto", "", "idcompraproduto DESC LIMIT 1");
+                    }
+
                     banco.Comando = new MySqlCommand(uteis.csql, banco.Cn);
                     banco.Comando.Prepare();
                     banco.Comando.ExecuteNonQuery();
@@ -193,6 +251,34 @@ namespace ComprasMercado
                     if (reader.Read() == true)
                     {
                         txtCodigo.Text = (reader.GetInt32(0) + 1).ToString();
+
+                        if (tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                        {
+                            cbo3.SelectedIndex = -1;
+                        }
+                        if (tituloPainel == "Cadastro de Compras")
+                        {
+                            cbo1.SelectedIndex = 0;
+                            cbo2.SelectedIndex = -1;
+                        }
+                    }
+                    else
+                    {
+                        txtCodigo.Text = "1";
+                        txtDescricao.Text = "";
+
+                        if (tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                        {
+                            cbo3.SelectedIndex = -1;
+                        }
+                        if (tituloPainel == "Cadastro de Compras")
+                        {
+                            cbo1.SelectedIndex = 0;
+                            cbo2.SelectedIndex = -1;
+                        }
+                        txtQuantidade.Text = "";
+                        txtValorCompra.Text = "";
+
                     }
                     banco.Cn.Close();
                 }
@@ -201,6 +287,67 @@ namespace ComprasMercado
             {
                 MessageBox.Show("Ocorreu um erro: " + ex.Message);
             }
+        }
+
+        private void CarregaCombo(ComboBox combo)
+        {
+            try
+            {
+                combo.Items.Clear();
+                banco.ConectaDB(false);
+
+                if (combo.Name == "cbo1")
+                {
+                    banco.Comando = new MySqlCommand(uteis.MontaQuery("idlocal, nomelocal", "local", "", "idlocal"), banco.Cn);
+                }
+                else if (combo.Name == "cbo2")
+                {
+                    banco.Comando = new MySqlCommand(uteis.MontaQuery("idproduto, nomeproduto", "produto", "", "idproduto"), banco.Cn);
+                }
+                else if (combo.Name == "cbo3")
+                {
+                    banco.Comando = new MySqlCommand(uteis.MontaQuery("idunidademedida, nomeunidademedida", "unidademedida", "", "idunidademedida"), banco.Cn);
+                }
+
+                banco.Comando.Prepare();
+                banco.Comando.ExecuteNonQuery();
+                var reader = banco.Comando.ExecuteReader();
+                while (reader.Read() == true)
+                {
+                    combo.Items.Add(reader.GetInt32(0) + " - " + reader.GetString(1));
+                    reader.NextResult();
+                }
+                banco.Cn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro: " + ex.Message);
+            }
+        }
+
+        private bool VerificaPreenchimentoDosCampos(string tituloPainel)
+        {
+            try
+            {
+                uteis.bAux = true;
+                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas" || tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                {
+                    if (txtCodigo.Text == "" || txtDescricao.Text == "") { uteis.bAux = false; }
+                }
+                if (tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                {
+                    if (cbo3.SelectedIndex == -1) { uteis.bAux = false; }
+                }
+                if (tituloPainel == "Cadastro de Compras")
+                {
+                    if (cbo1.SelectedIndex == -1 || cbo2.SelectedIndex == -1 || txtQuantidade.Text == "" || txtValorCompra.Text == "") { uteis.bAux = false; }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro: " + ex.Message);
+            }
+            return uteis.bAux;
         }
     }
 }

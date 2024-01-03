@@ -168,6 +168,7 @@
             buttonSalvar.TabIndex = 18;
             buttonSalvar.Text = "Salvar";
             buttonSalvar.UseVisualStyleBackColor = false;
+            buttonSalvar.Click += buttonSalvar_Click;
             // 
             // txtValorCompra
             // 
