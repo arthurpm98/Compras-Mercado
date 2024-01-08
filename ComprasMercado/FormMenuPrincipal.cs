@@ -93,19 +93,37 @@ namespace ComprasMercado
                     }
                     if (lblTitulo.Text == "Cadastro de Compras")
                     {
-                        uteis.csql = txtCodigo.Text + ",'" + CalendarDataCompra.ToString() + "'";
+                        //CORRIGIR A AÇÃO DE ADICIONAR COMPRA. NAO PRECISA APARECER O CAMPO "DESCRIÇÃO" NA TELA
+                        DateTime dataCompra = Convert.ToDateTime(CalendarDataCompra.SelectionStart.ToShortDateString());
+                        uteis.csql = txtCodigo.Text + ",'" + dataCompra.Year.ToString() + "-" + dataCompra.Month.ToString() + "-" + dataCompra.Day.ToString() + "'";
                         posicaoCaractere = cbo1.SelectedItem.ToString().IndexOf("-");
-                        uteis.csql = uteis.csql + ",'" +
+                        uteis.csql = uteis.csql + "," +
                                                 cbo1.SelectedItem.ToString().Substring(0, posicaoCaractere - 1).Trim()
-                                                + "'";
+                                                + ",'" +
+                                                decimal.Parse(txtValorCompra.Text)
+                                                + "','" +
+                                                decimal.Parse(txtQuantidade.Text) + "'";
+                        posicaoCaractere = cbo2.SelectedItem.ToString().IndexOf("-");
+                        uteis.csql = uteis.csql + "," + cbo2.SelectedItem.ToString().Substring(0, posicaoCaractere - 1).Trim();
+                        posicaoCaractere = cbo3.SelectedItem.ToString().IndexOf("-");
+                        uteis.csql = uteis.csql + "," + cbo3.SelectedItem.ToString().Substring(0, posicaoCaractere - 1).Trim();
 
-                        //CORRIGIR ESTA PARTE
+                        banco.Comando = new MySqlCommand(uteis.MontaInsert("compraproduto", uteis.csql), banco.Cn);
                     }
                     banco.Comando.Prepare();
+                    //CORRIGIR
                     banco.Comando.ExecuteNonQuery();
                     banco.Cn.Close();
-                    MessageBox.Show("Registro salvo com sucesso!\n" +
-                                    txtCodigo.Text + " - " + txtDescricao.Text);
+                    if (lblTitulo.Text == "Cadastro de Locais" || lblTitulo.Text == "Cadastro de Unidades de Medidas" || lblTitulo.Text == "Cadastro de Produtos")
+                    {
+                        MessageBox.Show("Registro salvo com sucesso!\n" +
+                                        txtCodigo.Text + " - " + txtDescricao.Text);
+                    }
+                    else if (lblTitulo.Text == "Cadastro de Compras")
+                    {
+                        MessageBox.Show("Registro salvo com sucesso!\n" +
+                                        txtCodigo.Text + " - " + cbo2.SelectedItem.ToString());
+                    }
                 }
                 else
                 {
@@ -157,6 +175,8 @@ namespace ComprasMercado
                         cbo1.Visible = true;
                         lblValorCompra.Visible = true;
                         txtValorCompra.Visible = true;
+                        lblDescricao.Visible = false;
+                        txtDescricao.Visible = false;
                         lblCbo2.Visible = true;
                         cbo2.Visible = true;
                         lblQuantidade.Visible = true;
@@ -362,9 +382,13 @@ namespace ComprasMercado
                 uteis.bAux = true;
 
                 //Verifica o título do painel
-                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas" || tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
+                if (tituloPainel == "Cadastro de Locais" || tituloPainel == "Cadastro de Unidades de Medidas" || tituloPainel == "Cadastro de Produtos")
                 {
                     if (txtCodigo.Text == "" || txtDescricao.Text == "") { uteis.bAux = false; }
+                }
+                if (tituloPainel == "Cadastro de Compras")
+                {
+                    if (txtCodigo.Text == "") { uteis.bAux = false; }
                 }
                 if (tituloPainel == "Cadastro de Produtos" || tituloPainel == "Cadastro de Compras")
                 {
